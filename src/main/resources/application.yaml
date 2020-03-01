@@ -2,17 +2,17 @@ spring:
   datasource:
     username: root
     password: admin
-    url: jdbc:mysql://localhost:3306/project?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=true
+    url: jdbc:mysql://localhost:3306/community?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=true
     driver-class-name: com.mysql.cj.jdbc.Driver
     # serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=true
-    type:
+    type: com.alibaba.druid.pool.DruidDataSource
   thymeleaf:
     cache: false
 
 
 mybatis:
   type-aliases-package:
-  mapper-locations: classpath:mybatis/mapper/*.xml
+  mapper-locations:
 server:
   port: 8887
 

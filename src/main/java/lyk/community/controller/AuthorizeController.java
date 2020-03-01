@@ -1,7 +1,10 @@
 package lyk.community.controller;
 
+import lombok.AllArgsConstructor;
 import lyk.community.dto.AccessTokenDTO;
 import lyk.community.dto.GithubUser;
+import lyk.community.mapper.UserMapper;
+import lyk.community.model.User;
 import lyk.community.provider.GithubProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,7 +12,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.UUID;
 
 @Controller
 public class AuthorizeController {
@@ -24,9 +29,13 @@ public class AuthorizeController {
     @Value("${github.redirect.uri}")
     private String RedirectUri;
 
+    @Autowired
+    private UserMapper userMapper;
+
     @GetMapping("/callback")
     public String callback(@RequestParam(name="code") String code,
-                           @RequestParam(name="state")String state) throws IOException {
+                           @RequestParam(name="state")String state,
+                           HttpServletRequest request) throws IOException {
          AccessTokenDTO accessTokenDTO = new AccessTokenDTO();
          accessTokenDTO.setClient_id(clientId);
          accessTokenDTO.setClient_secret(clientSecret);
@@ -34,8 +43,22 @@ public class AuthorizeController {
          accessTokenDTO.setRedirect_uri(RedirectUri);
          accessTokenDTO.setState(state);
          String accessToken = githubProvider.getAccessToken(accessTokenDTO);
-         GithubUser user = githubProvider.getUser(accessToken);
-         System.out.println(user.getId());
-         return "index";
+         GithubUser githubUser = githubProvider.getUser(accessToken);
+         if (githubUser !=null){
+             User user = new User();
+             user.setToken(UUID.randomUUID().toString());
+             user.setName(githubUser.getName());
+             user.setAccountId(String.valueOf(githubUser.getId()));
+             user.setGmtCreate(System.currentTimeMillis());
+             user.setGmtModified(user.getGmtCreate());
+             userMapper.insert(user);
+             //登录成功 写 cookie 和 session
+             request.getSession().setAttribute("user",githubUser);
+              return "redirect:/"; // redirect只能返回路径
+         }else{
+              return "redirect:/";
+             //失败 重新登录
+         }
+
     }
 }
